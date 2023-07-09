@@ -30,6 +30,7 @@ import com.cst438.domain.Enrollment;
 import com.cst438.domain.EnrollmentRepository;
 import com.cst438.domain.ScheduleDTO;
 import com.cst438.domain.Student;
+import com.cst438.domain.StudentDTO;
 import com.cst438.domain.StudentRepository;
 import com.cst438.service.GradebookService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -56,8 +57,8 @@ public class JunitTestSchedule {
 
 	static final String URL = "http://localhost:8080";
 	public static final int TEST_COURSE_ID = 40442;
-	public static final String TEST_STUDENT_EMAIL = "test@csumb.edu";
-	public static final String TEST_STUDENT_NAME  = "test";
+	public static final String TEST_STUDENT_EMAIL = "test1@csumb.edu";
+	public static final String TEST_STUDENT_NAME  = "test1";
 	public static final int TEST_YEAR = 2021;
 	public static final String TEST_SEMESTER = "Fall";
 
@@ -211,7 +212,66 @@ public class JunitTestSchedule {
 		// verify that repository delete method was called.
 		verify(enrollmentRepository).delete(any(Enrollment.class));
 	}
+	
+	@Test
+	public void addStudent()  throws Exception {
 		
+		MockHttpServletResponse response;
+		
+		Student student = new Student();
+		student.setStudent_id(1);
+		student.setEmail(TEST_STUDENT_EMAIL);
+		student.setName(TEST_STUDENT_NAME);
+		student.setStatusCode(0);
+		
+		//Stubs for Repositories
+		given(studentRepository.existsByEmail(TEST_STUDENT_EMAIL)).willReturn(false);
+
+		//DTO Creation
+		StudentDTO StudentDTO = new StudentDTO();
+		StudentDTO.email = TEST_STUDENT_EMAIL;
+		StudentDTO.name = TEST_STUDENT_NAME;
+		
+		//HTTP Post Request with body of StudentDTO as JSon
+		response = mvc.perform(
+				MockMvcRequestBuilders
+			      .post("/student")
+			      .content(asJsonString(StudentDTO))
+			      .contentType(MediaType.APPLICATION_JSON)
+			      .accept(MediaType.APPLICATION_JSON))
+				.andReturn().getResponse();
+		
+		// verify that return status = OK (value 200) 
+		assertEquals(200, response.getStatus());
+		
+		// verify that returned data has non zero primary key
+		StudentDTO result = fromJsonString(response.getContentAsString(), StudentDTO.class);
+		assertNotEquals( 0  , result.student_id);
+		
+		// verify that repository save method was called.
+		verify(studentRepository).save(any(Student.class));
+		
+		
+	}
+	
+	@Test
+	public void updateStudent()  throws Exception {
+		
+		MockHttpServletResponse response;
+		
+		// do HTTP Put for Student Update 
+				response = mvc.perform(
+						MockMvcRequestBuilders
+					      .put("/student?email=" + TEST_STUDENT_EMAIL + "&status=" + 1)
+					      .accept(MediaType.APPLICATION_JSON))
+						.andReturn().getResponse();
+				
+				// verify that return status = OK (value 200) 
+				assertEquals(200, response.getStatus());
+
+	
+		
+	}
 	private static String asJsonString(final Object obj) {
 		try {
 
