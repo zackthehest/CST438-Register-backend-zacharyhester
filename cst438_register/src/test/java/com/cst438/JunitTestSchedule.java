@@ -24,6 +24,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import com.cst438.controller.ScheduleController;
+import com.cst438.controller.StudentController;
 import com.cst438.domain.Course;
 import com.cst438.domain.CourseRepository;
 import com.cst438.domain.Enrollment;
@@ -50,15 +51,15 @@ import org.springframework.test.context.ContextConfiguration;
  *  addFilters=false turns off security.  (I could not get security to work in test environment.)
  *  WebMvcTest is needed for test environment to create Repository classes.
  */
-@ContextConfiguration(classes = { ScheduleController.class })
+@ContextConfiguration(classes = { ScheduleController.class, StudentController.class })
 @AutoConfigureMockMvc(addFilters = false)
 @WebMvcTest
 public class JunitTestSchedule {
 
 	static final String URL = "http://localhost:8080";
 	public static final int TEST_COURSE_ID = 40442;
-	public static final String TEST_STUDENT_EMAIL = "test1@csumb.edu";
-	public static final String TEST_STUDENT_NAME  = "test1";
+	public static final String TEST_STUDENT_EMAIL = "test@csumb.edu";
+	public static final String TEST_STUDENT_NAME  = "test";
 	public static final int TEST_YEAR = 2021;
 	public static final String TEST_SEMESTER = "Fall";
 
@@ -226,7 +227,8 @@ public class JunitTestSchedule {
 		
 		//Stubs for Repositories
 		given(studentRepository.existsByEmail(TEST_STUDENT_EMAIL)).willReturn(false);
-
+		given(studentRepository.save(any())).willReturn(student);
+		
 		//DTO Creation
 		StudentDTO StudentDTO = new StudentDTO();
 		StudentDTO.email = TEST_STUDENT_EMAIL;
@@ -251,13 +253,20 @@ public class JunitTestSchedule {
 		// verify that repository save method was called.
 		verify(studentRepository).save(any(Student.class));
 		
-		
 	}
 	
 	@Test
 	public void updateStudent()  throws Exception {
 		
 		MockHttpServletResponse response;
+		
+		Student student = new Student();
+		student.setStudent_id(1);
+		student.setEmail(TEST_STUDENT_EMAIL);
+		student.setName(TEST_STUDENT_NAME);
+		student.setStatusCode(0);
+		
+		given(studentRepository.findByEmail(any())).willReturn(student);
 		
 		// do HTTP Put for Student Update 
 				response = mvc.perform(
@@ -268,10 +277,13 @@ public class JunitTestSchedule {
 				
 				// verify that return status = OK (value 200) 
 				assertEquals(200, response.getStatus());
+				
+				// verify that repository save method was called.
+				verify(studentRepository).save(any(Student.class));
 
-	
-		
 	}
+	
+	
 	private static String asJsonString(final Object obj) {
 		try {
 
